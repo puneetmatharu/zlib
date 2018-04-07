@@ -26,8 +26,10 @@
 #  include <limits.h>
 #endif
 
-#ifndef _POSIX_SOURCE
-#  define _POSIX_SOURCE
+#ifndef _MSC_VER
+#  ifndef _POSIX_SOURCE
+#    define _POSIX_SOURCE
+#  endif
 #endif
 #include <fcntl.h>
 
