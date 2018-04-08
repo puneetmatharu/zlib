@@ -13,7 +13,7 @@ the library is working correctly.  Another example is given in the file
 test/minigzip.c.  The compression library itself is composed of all source
 files in the root directory.
 
-To compile all files and run the test program, follow this instructions::
+To compile all files and run the test program, follow this instructions:
 
   mkdir build && cd build
   cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
@@ -21,7 +21,7 @@ To compile all files and run the test program, follow this instructions::
   ctest
   DESTDIR=/tmp/zlib/ cmake --build . --target install
 
-Tip: Try cmake --help to see all available generators on you system.
+Tip: Try cmake --help to see all available generators on your system.
 
 Questions about zlib should be sent to <zlib@gzip.org>, or to Gilles Vollant
 <info@winimage.com> for the Windows DLL version.  The zlib home page is

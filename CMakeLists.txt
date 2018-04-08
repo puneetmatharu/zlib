@@ -1,14 +1,12 @@
 cmake_minimum_required(VERSION 3.1.2)
-# NOTE:this was superfluous in cmake V2.6.0!
-### set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 project(zlib C)
 
 set(VERSION "1.2.11.1")
 
-option(ASM686 "Enable building i686 assembly implementation")
-option(AMD64 "Enable building amd64 assembly implementation")
+
 option(BUILD_SHARED_LIBS "Enable to build a shared library(DLL) instead a static one." ON)
+option(BUILD_EXAMPLES "Enable to build the examples too." OFF)
 
 
 set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for executables")
@@ -17,11 +15,10 @@ set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "Installation d
 set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man" CACHE PATH "Installation directory for manual pages")
 set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
 
+
 include(CheckTypeSize)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
-### unused? include(CheckCSourceCompiles)
-enable_testing()
 
 check_include_file(sys/types.h HAVE_SYS_TYPES_H)
 check_include_file(stdint.h    HAVE_STDINT_H)
@@ -132,38 +129,6 @@ if(NOT MINGW AND NOT MSYS)
     )
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCC)
-    if(ASM686)
-        set(ZLIB_ASMS contrib/asm686/match.S)
-    elseif (AMD64)
-        set(ZLIB_ASMS contrib/amd64/amd64-match.S)
-    endif ()
-
-    if(ZLIB_ASMS)
-        add_definitions(-DASMV)
-        set_source_files_properties(${ZLIB_ASMS} PROPERTIES LANGUAGE C COMPILE_FLAGS -DNO_UNDERLINE)
-    endif()
-endif()
-
-if(MSVC)
-    if(ASM686)
-        ENABLE_LANGUAGE(ASM_MASM)
-        set(ZLIB_ASMS
-            contrib/masmx86/inffas32.asm
-            contrib/masmx86/match686.asm
-        )
-    elseif (AMD64)
-        ENABLE_LANGUAGE(ASM_MASM)
-        set(ZLIB_ASMS
-            contrib/masmx64/gvmat64.asm
-            contrib/masmx64/inffasx64.asm
-        )
-    endif()
-
-    if(ZLIB_ASMS)
-        add_definitions(-DASMV -DASMINF)
-    endif()
-endif()
 
 # parse the full version number from zlib.h and include in ZLIB_FULL_VERSION
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
@@ -187,11 +152,11 @@ if(BUILD_SHARED_LIBS AND MINGW)
 endif()
 
 if(BUILD_SHARED_LIBS)
-    add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+    add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
     set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
     set_target_properties(zlib PROPERTIES SOVERSION 1)
 else()
-    add_library(zlib STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+    add_library(zlib STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 endif()
 
 if(BUILD_SHARED_LIBS AND NOT CYGWIN)
@@ -233,16 +198,18 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
 endif()
 
 #============================================================================
-# Example binaries
+# Example binaries and ctests
 #============================================================================
+enable_testing()
 
 add_executable(example test/example.c)
 target_link_libraries(example zlib)
-
 add_test(example example)
 
-add_executable(minigzip test/minigzip.c)
-target_link_libraries(minigzip zlib)
+if(BUILD_EXAMPLES)
+    add_executable(minigzip test/minigzip.c)
+    target_link_libraries(minigzip zlib)
+endif()
 
 if(HAVE_OFF64_T)
     add_executable(example64 test/example.c)
@@ -250,7 +217,9 @@ if(HAVE_OFF64_T)
     set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
     add_test(example64 example64)
 
-    add_executable(minigzip64 test/minigzip.c)
-    target_link_libraries(minigzip64 zlib)
-    set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+    if(BUILD_EXAMPLES)
+        add_executable(minigzip64 test/minigzip.c)
+        target_link_libraries(minigzip64 zlib)
+        set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+    endif()
 endif()
