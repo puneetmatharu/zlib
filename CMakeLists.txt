@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.1.2)
 
-project(zlib C)
-
-set(VERSION "1.2.11.1")
+project(zlib VERSION 1.2.11.1 LANGUAGES C)
 
 
 option(BUILD_SHARED_LIBS "Enable to build a shared library(DLL) instead a static one." ON)
@@ -135,6 +133,9 @@ file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
 string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
     "\\1" ZLIB_FULL_VERSION ${_zlib_h_contents})
 
+
+# TODO: add_library without SHARED/STATIC arg picks which one to use based on
+# the variable BUILD_SHARED_LIBS. Maybe this could be simplified? (Herry Mallon)
 if(BUILD_SHARED_LIBS AND MINGW)
     # This gets us DLL resource information when compiling on MinGW.
     if(NOT CMAKE_RC_COMPILER)
@@ -181,6 +182,14 @@ elseif(BUILD_SHARED_LIBS AND WIN32)
     set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
 endif()
 
+
+add_library(zlib::zlib ALIAS zlib)
+# Note also that CMake's own FindZLIB.cmake module defines a slightly different
+# imported target named ZLIB::ZLIB (the upper/lowercase differences are
+# meaningful). (Craig Scott)
+add_library(ZLIB::ZLIB ALIAS zlib)
+
+
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     install(TARGETS zlib
         EXPORT ${PROJECT_NAME}Config
@@ -188,7 +197,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
         ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
         LIBRARY DESTINATION "${INSTALL_LIB_DIR}")
     install(EXPORT ${PROJECT_NAME}Config
-        NAMESPACE zlib:: DESTINATION "${INSTALL_LIB_DIR}/cmake")
+        NAMESPACE zlib:: DESTINATION "${INSTALL_LIB_DIR}/cmake/${PROJECT_NAME}")
     target_include_directories(zlib PUBLIC $<INSTALL_INTERFACE:${INSTALL_INC_DIR}>)
 endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
@@ -202,28 +211,29 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
 endif()
 
 #============================================================================
-# Example binaries and ctests
+# Example binaries and ctests locatet at test subdir
+# TODO: add_subdirectory(test)
 #============================================================================
-enable_testing()
-
-add_executable(example test/example.c)
-target_link_libraries(example zlib)
-add_test(example example)
-
-if(BUILD_EXAMPLES)
-    add_executable(minigzip test/minigzip.c)
-    target_link_libraries(minigzip zlib)
-endif()
-
-if(HAVE_OFF64_T)
-    add_executable(example64 test/example.c)
-    target_link_libraries(example64 zlib)
-    set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
-    add_test(example64 example64)
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(example test/example.c)
+    target_link_libraries(example zlib)
+    add_test(example example)
 
     if(BUILD_EXAMPLES)
-        add_executable(minigzip64 test/minigzip.c)
-        target_link_libraries(minigzip64 zlib)
-        set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+        add_executable(minigzip test/minigzip.c)
+        target_link_libraries(minigzip zlib)
+
+        if(HAVE_OFF64_T)
+            add_executable(example64 test/example.c)
+            target_link_libraries(example64 zlib)
+            set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+            add_test(example64 example64)
+
+            add_executable(minigzip64 test/minigzip.c)
+            target_link_libraries(minigzip64 zlib)
+            set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+        endif()
     endif()
+
 endif()
