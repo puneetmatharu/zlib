@@ -1,19 +1,23 @@
-cmake_minimum_required(VERSION 3.1.2)
+cmake_minimum_required(VERSION 3.24)
 
 project(
   zlib
-  VERSION 1.2.13
+  VERSION 1.2.14
   LANGUAGES C)
+
+# Build in Release mode by default
+if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
+endif()
 
 option(BUILD_SHARED_LIBS
        "Enable to build a shared library(DLL) instead a static one." ON)
-option(BUILD_EXAMPLES "Enable to build the examples too." OFF)
 
-set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH
+set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin/zlib" CACHE PATH
     "Installation directory for executables")
-set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH
+set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib/zlib" CACHE PATH
     "Installation directory for libraries")
-set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH
+set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include/zlib" CACHE PATH
     "Installation directory for headers")
 set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man" CACHE PATH
     "Installation directory for manual pages")
@@ -192,55 +196,57 @@ add_library(zlib::zlib ALIAS zlib)
 add_library(ZLIB::ZLIB ALIAS zlib)
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+  # This will be used to replace @PACKAGE_cmakeModulesDir@
+  set(CMAKE_MODULES_DIR cmake)
+
+  include(CMakePackageConfigHelpers)
+
+  # Configure 'zlibConfig.cmake' using 'zlibConfig.cmake.in'
+  configure_package_config_file(
+    "${CMAKE_CURRENT_LIST_DIR}/zlibConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/zlibConfig.cmake"
+    INSTALL_DESTINATION "${INSTALL_LIB_DIR}/cmake/zlib"
+    PATH_VARS CMAKE_MODULES_DIR
+    NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+
+  # Configure 'zlibConfigVersion.cmake' which exports the version info
+  write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/zlibConfigVersion.cmake"
+    VERSION ${zlib_VERSION}
+    COMPATIBILITY SameMajorVersion)
+
+  # Define the installation locations and export target
   install(
     TARGETS zlib
-    EXPORT ${PROJECT_NAME}Config
+    EXPORT zlibExports
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
     ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
-    LIBRARY DESTINATION "${INSTALL_LIB_DIR}")
-  install(
-    EXPORT ${PROJECT_NAME}Config
+    LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+    INCLUDES
+    DESTINATION "${INSTALL_INC_DIR}")
+
+  # Add all targets to the build-tree export set
+  export(
+    EXPORT zlibExports
     NAMESPACE zlib::
-    DESTINATION "${INSTALL_LIB_DIR}/cmake/${PROJECT_NAME}")
-  target_include_directories(zlib
-                             PUBLIC $<INSTALL_INTERFACE:${INSTALL_INC_DIR}>)
-endif()
-if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/zlibExports.cmake)
+
+  # Install 'zlibConfig.cmake'
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/zlibConfig.cmake"
+                "${CMAKE_CURRENT_BINARY_DIR}/zlibConfigVersion.cmake"
+          DESTINATION "${INSTALL_LIB_DIR}/cmake/zlib")
+
+  # Install the exports file
+  install(
+    EXPORT zlibExports
+    NAMESPACE zlib::
+    DESTINATION "${INSTALL_LIB_DIR}/cmake/zlib")
+
+  target_include_directories(
+    zlib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                $<INSTALL_INTERFACE:${INSTALL_INC_DIR}>)
+
   install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION "${INSTALL_INC_DIR}")
-endif()
-if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
   install(FILES zlib.3 DESTINATION "${INSTALL_MAN_DIR}/man3")
-endif()
-if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
   install(FILES ${ZLIB_PC} DESTINATION "${INSTALL_PKGCONFIG_DIR}")
-endif()
-
-# ============================================================================
-# Example binaries and ctests locatet at test subdir TODO:
-# add_subdirectory(test)
-# ============================================================================
-include(CTest)
-if(BUILD_TESTING)
-  add_executable(example test/example.c)
-  target_link_libraries(example zlib)
-  add_test(example example)
-
-  if(BUILD_EXAMPLES)
-    add_executable(minigzip test/minigzip.c)
-    target_link_libraries(minigzip zlib)
-
-    if(HAVE_OFF64_T)
-      add_executable(example64 test/example.c)
-      target_link_libraries(example64 zlib)
-      set_target_properties(example64 PROPERTIES COMPILE_FLAGS
-                                                 "-D_FILE_OFFSET_BITS=64")
-      add_test(example64 example64)
-
-      add_executable(minigzip64 test/minigzip.c)
-      target_link_libraries(minigzip64 zlib)
-      set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS
-                                                  "-D_FILE_OFFSET_BITS=64")
-    endif()
-  endif()
-
 endif()

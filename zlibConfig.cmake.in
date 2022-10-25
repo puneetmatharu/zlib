@@ -1,0 +1,9 @@
+# -------------------------------[ BOILERPLATE ]-------------------------------
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Exports.cmake")
+
+list(APPEND CMAKE_MODULE_PATH "@PACKAGE_CMAKE_MODULES_DIR@")
+
+# -----------------------------------------------------------------------------

@@ -1,4 +1,6 @@
-ZLIB DATA COMPRESSION LIBRARY
+# ZLib Data Compression Library
+
+> **NOTE: This is a heavily(!) modified version of the original repository.**
 
 zlib 1.2.13 is a general purpose data compression library.  All the code is
 thread safe.  The data format used by the zlib library is described by RFCs
@@ -15,27 +17,26 @@ files in the root directory.
 
 To compile all files and run the test program, follow this instructions:
 
-  mkdir build && cd build
-  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
-  cmake --build .
-  ctest
-  DESTDIR=/tmp/zlib/ cmake --build . --target install
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
+cmake --build .
+ctest
+DESTDIR=/tmp/zlib/ cmake --build . --target install
+```
 
-Tip: Try cmake --help to see all available generators on your system.
+**Tip:** Try cmake --help to see all available generators on your system.
 
-Questions about zlib should be sent to <zlib@gzip.org>, or to Gilles Vollant
-<info@winimage.com> for the Windows DLL version.  The zlib home page is
-http://zlib.net/ .  Before reporting a problem, please check this site to
+Questions about zlib should be sent to (`zlib@gzip.org`), or to Gilles Vollant
+(`info@winimage.com`) for the Windows DLL version. The zlib home page is
+[http://zlib.net/](http://zlib.net/).  Before reporting a problem, please check this site to
 verify that you have the latest version of zlib; otherwise get the latest
 version and check whether the problem still exists or not.
 
-PLEASE read the zlib FAQ http://zlib.net/zlib_faq.html before asking for help.
+PLEASE read the [zlib FAQ](http://zlib.net/zlib_faq.html) before asking for help.
 
 Mark Nelson <markn@ieee.org> wrote an article about zlib for the Jan.  1997
-issue of Dr.  Dobb's Journal; a copy of the article is available at
-http://marknelson.us/1997/01/01/zlib-engine/ .
-
-The changes made in version 1.2.13 are documented in the file ChangeLog.
+issue of Dr.  Dobb's Journal; a copy of the article is available [here](http://marknelson.us/1997/01/01/zlib-engine/).
 
 Unsupported third party contributions are provided in directory contrib/ .
 
@@ -55,7 +56,6 @@ zlib is built into tcl: http://wiki.tcl.tk/4610 .
 An experimental package to read and write files in .zip format, written on top
 of zlib by Gilles Vollant <info@winimage.com>, is available in the
 contrib/minizip directory of zlib.
-
 
 Notes for some targets:
 
@@ -77,7 +77,6 @@ Notes for some targets:
 - gzdopen is not supported on RISCOS or BEOS.
 
 - For PalmOs, see http://palmzlib.sourceforge.net/
-
 
 Acknowledgments:
 
